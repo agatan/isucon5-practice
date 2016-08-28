@@ -186,13 +186,11 @@ SQL
 SELECT entries.* FROM entries
 LEFT JOIN relations ON relations.one = entries.user_id
 WHERE relations.another = ?
+ORDER BY created_at DESC LIMIT 10
 SQL
-    p db.xquery(entries_query, session[:user_id])
-    db.query('SELECT * FROM entries ORDER BY created_at DESC LIMIT 1000').each do |entry|
-      next unless is_friend?(entry[:user_id])
+    db.xquery(entries_query, session[:user_id]).each do |entry|
       entry[:title] = entry[:body].split(/\n/).first
       entries_of_friends << entry
-      break if entries_of_friends.size >= 10
     end
 
     comments_of_friends = []
