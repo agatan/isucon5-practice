@@ -101,10 +101,16 @@ SQL
     end
 
     def is_friend?(another_id)
-      user_id = session[:user_id]
-      query = 'SELECT COUNT(1) AS cnt FROM relations WHERE (one = ? AND another = ?) OR (one = ? AND another = ?)'
-      cnt = db.xquery(query, user_id, another_id, another_id, user_id).first[:cnt]
-      cnt.to_i > 0 ? true : false
+      unless @relations
+        @relations = {}
+        db.query('SELECT * FROM relations').each do |r|
+          @relations[r[:one]] ||= Set.new
+          @relations[r[:one]] << r[:another]
+          @relations[r[:another]] ||= Set.new
+          @relations[r[:another]] << r[:one]
+        end
+      end
+      @relations[another_id] && @relations[another_id].include?(session[:user_id])
     end
 
     def is_friend_account?(account_name)
