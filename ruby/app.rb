@@ -182,6 +182,12 @@ SQL
     comments_for_me = db.xquery(comments_for_me_query, current_user[:id])
 
     entries_of_friends = []
+    entries_query = <<SQL
+SELECT entries.* FROM entries
+LEFT JOIN relations ON relations.one = entries.user_id
+WHERE relations.another = ?
+SQL
+    p db.xquery(entries_query, session[:user_id])
     db.query('SELECT * FROM entries ORDER BY created_at DESC LIMIT 1000').each do |entry|
       next unless is_friend?(entry[:user_id])
       entry[:title] = entry[:body].split(/\n/).first
