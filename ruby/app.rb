@@ -40,12 +40,12 @@ class Isucon5::WebApp < Sinatra::Base
     def db
       return Thread.current[:isucon5_db] if Thread.current[:isucon5_db]
       client = Mysql2::Client.new(
-        host: config[:db][:host],
-        port: config[:db][:port],
+        # host: config[:db][:host],
+        # port: config[:db][:port],
         username: config[:db][:username],
         password: config[:db][:password],
         database: config[:db][:database],
-        # socket: '/var/lib/mysql/mysql.sock',
+        socket: '/var/run/mysqld/mysqld.sock',
         reconnect: true,
       )
       client.query_options.merge!(symbolize_keys: true)
