@@ -194,13 +194,22 @@ SQL
     end
 
     comments_of_friends = []
-    db.query('SELECT * FROM comments ORDER BY created_at DESC LIMIT 1000').each do |comment|
-      next unless is_friend?(comment[:user_id])
-      entry = db.xquery('SELECT * FROM entries WHERE id = ?', comment[:entry_id]).first
-      entry[:is_private] = (entry[:private] == 1)
-      next if entry[:is_private] && !permitted?(entry[:user_id])
+    comments_query = <<SQL
+SELECT comments.* FROM comments
+LEFT JOIN relations ON relations.one = comments.user_id
+LEFT JOIN entries ON entries.id = comments.entry_id
+WHERE relations.another = ? AND entries.private != 1
+AND (
+  EXISTS (
+    SELECT id FROM relations WHERE one = entries.user_id AND another = ?
+  )
+  OR
+  entries.user_id = ?
+)
+ORDER BY created_at DESC LIMIT 10
+SQL
+    db.xquery(comments_query, session[:user_id], session[:user_id], session[:user_id]).each do |comment|
       comments_of_friends << comment
-      break if comments_of_friends.size >= 10
     end
 
     friends_query = 'SELECT * FROM relations WHERE one = ? OR another = ? ORDER BY created_at DESC'
